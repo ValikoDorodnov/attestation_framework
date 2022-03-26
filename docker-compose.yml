@@ -1,0 +1,30 @@
+version: "3.1"
+
+services:
+  nginx:
+    build: docker/nginx
+    container_name: FRAMEWORK_NGINX
+    restart: always
+    volumes:
+      - ${APPLICATION_DIR}:/var/www/app
+      - ./docker/nginx/config/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/config/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - 127.0.0.1:${NGINX_PORT}
+    networks:
+      - project_framework
+
+  php:
+    build: docker/php
+    restart: always
+    container_name: FRAMEWORK_PHP
+    volumes:
+      - ${APPLICATION_DIR}:/var/www/app
+    environment:
+      PHP_IDE_CONFIG: "serverName=Docker"
+    networks:
+      - project_framework
+
+networks:
+  project_framework:
+    driver: bridge

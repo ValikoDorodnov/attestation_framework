@@ -1,0 +1,28 @@
+{
+    "name": "valentindorodnov/study_framework",
+    "description": "Attestation project",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Valentin Dorodnov",
+            "email": "valikodorodnov@gmail.com"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "guzzlehttp/guzzle": "^7.4"
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit"
+    }
+}
