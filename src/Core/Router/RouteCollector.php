@@ -31,6 +31,24 @@ final class RouteCollector
     }
 
     /**
+     * @throws NotFoundException
+     * @throws MethodNotAllowedException
+     */
+    public function getRoute(string $method, string $uri): Route
+    {
+        foreach ($this->routes as $route) {
+            $isValidPath = $route->validateRouteByPath($uri);
+
+            if ($isValidPath) {
+                $validRoute = $this->getRouteByPathAndMethod($route->getPath(), $method);
+                $validRoute->prepareVars($uri);
+                return $validRoute;
+            }
+        }
+        throw new NotFoundException();
+    }
+
+    /**
      * @param string $method
      * @param string $path
      * @param string $handler
@@ -50,23 +68,16 @@ final class RouteCollector
     }
 
     /**
-     * @throws NotFoundException
+     * @param string $path
+     * @param string $method
+     * @return Route
      * @throws MethodNotAllowedException
      */
-    public function getRoute(string $method, string $uri): Route
+    private function getRouteByPathAndMethod(string $path, string $method): Route
     {
-        foreach ($this->routes as $route) {
-            $isValidPath = $route->validateRouteByPath($uri);
-
-            if ($isValidPath) {
-                if (isset($this->routesByPathAndMethod[$route->getPath()][$method])) {
-                    $validRoute = $this->routesByPathAndMethod[$route->getPath()][$method];
-                    $validRoute->setVars($uri);
-                    return $validRoute;
-                }
-                throw new MethodNotAllowedException();
-            }
+        if (isset($this->routesByPathAndMethod[$path][$method])) {
+            return $this->routesByPathAndMethod[$path][$method];
         }
-        throw new NotFoundException();
+        throw new MethodNotAllowedException();
     }
 }

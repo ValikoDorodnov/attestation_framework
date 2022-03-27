@@ -8,9 +8,9 @@ use App\Core\Router\RouteCollector;
 require __DIR__ . '/../vendor/autoload.php';
 
 $routes = require __DIR__ . '/../config/routes.php';
-$services = require __DIR__ . '/../config/services.php';
+$dependencies = require __DIR__ . '/../config/dependencies.php';
 
-$diContainer = new DIContainer($services);
+$diContainer = new DIContainer($dependencies);
 $collector = new RouteCollector($routes);
 $request = new Request();
 

@@ -6,7 +6,7 @@ namespace App\Core;
 
 final class DIContainer
 {
-    private array $classes = [];
+    private array $dependencies = [];
 
     public function __construct(array $dependencies)
     {
@@ -16,12 +16,12 @@ final class DIContainer
                 $initialized[] = new $class();
             }
 
-            $this->classes[$name] = new $name(...$initialized);
+            $this->dependencies[$name] = new $name(...$initialized);
         }
     }
 
-    public function getClassByName(string $name): ?object
+    public function getDependencyByName(string $name): ?object
     {
-        return $this->classes[$name] ?? null;
+        return $this->dependencies[$name] ?? null;
     }
 }

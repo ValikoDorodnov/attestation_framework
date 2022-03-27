@@ -8,8 +8,6 @@ use App\Core\DIContainer;
 use App\Core\Http\Request;
 use App\Core\Http\Response;
 use App\Core\Http\StatusCode;
-use App\Core\Exceptions\NotFoundException;
-use App\Core\Exceptions\MethodNotAllowedException;
 
 final class Dispatcher
 {
@@ -23,48 +21,46 @@ final class Dispatcher
 
     public function dispatch(): void
     {
-        $routeInfo = $this->parseRoute(
-            method: $this->request->method(),
-            uri: $this->request->requestedUri()
-        );
-        http_response_code($routeInfo['statusCode']);
+        $statusCode = StatusCode::FOUND;
+        $message = '';
 
-        if ($routeInfo['statusCode'] === StatusCode::FOUND) {
+        try {
+            $routeInfo = $this->parseRoute(
+                method: $this->request->method(),
+                uri: $this->request->requestedUri()
+            );
 
-            [$class, $method] = explode('/', $routeInfo['handler'], 2);
-            $class = $this->container->getClassByName($class) ?? new $class();
+            [$class, $method] = explode('/', $routeInfo->handler, 2);
+            $class = $this->container->getDependencyByName($class) ?? new $class();
 
-            $response = $class->{$method}(...array_values($routeInfo['vars']));
+            $response = $class->{$method}(...array_values($routeInfo->vars));
 
             if ($response instanceof Response) {
+                $statusCode = $response->getStatusCode();
                 $response();
             }
 
-        } else {
-            echo $routeInfo['message'];
+        } catch (\Exception $e) {
+            $statusCode = $e->getCode();
+            $message = $e->getMessage();
+            if ($statusCode === 0) {
+                $statusCode = StatusCode::SERVER_ERROR;
+            }
+        }
+
+        http_response_code($statusCode);
+        if ($message) {
+            echo $message;
         }
     }
 
-    private function parseRoute(string $method, string $uri): array
+    private function parseRoute(string $method, string $uri): RouteInfo
     {
-        $routeInfo = [];
+        $routeInfo = new RouteInfo();
 
-        try {
-            $route = $this->collector->getRoute(method: $method, uri: $uri);
-            $routeInfo['statusCode'] = StatusCode::FOUND;
-            $routeInfo['handler'] = $route->getHandler();
-            $routeInfo['vars'] = $route->getVars();
-        } catch (\Exception $e) {
-            $routeInfo['message'] = $e->getMessage();
-            $routeInfo['statusCode'] = StatusCode::SERVER_ERROR;
-
-            if ($e instanceof MethodNotAllowedException) {
-                $routeInfo['statusCode'] = StatusCode::METHOD_NOT_ALLOWED;
-            }
-            if ($e instanceof NotFoundException) {
-                $routeInfo['statusCode'] = StatusCode::NOT_FOUND;
-            }
-        }
+        $route = $this->collector->getRoute(method: $method, uri: $uri);
+        $routeInfo->handler = $route->getHandler();
+        $routeInfo->vars = $route->getVars();
 
         return $routeInfo;
     }

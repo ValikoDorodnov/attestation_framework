@@ -23,7 +23,7 @@ final class AddNewArticle extends FeatureTestCase
             ], JSON_THROW_ON_ERROR)
         ]);
 
-        $this->assertEquals(StatusCode::FOUND, $response->getStatusCode());
+        $this->assertEquals(StatusCode::CREATED, $response->getStatusCode());
         $this->assertSame('{"id":"article-4"}', $response->getBody()->getContents());
     }
 }
