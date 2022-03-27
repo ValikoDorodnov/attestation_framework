@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Core\Http\StatusCode;
 use GuzzleHttp\Exception\GuzzleException;
 use Tests\Support\FeatureTestCase;
 
@@ -18,6 +19,6 @@ final class NotFoundRouteTest extends FeatureTestCase
             $code = $e->getCode();
         }
 
-        $this->assertEquals(404, $code);
+        $this->assertEquals(StatusCode::NOT_FOUND, $code);
     }
 }

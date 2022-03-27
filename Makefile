@@ -1,3 +1,14 @@
+reboot: env-init docker-down docker-up
+
+docker-up:
+	docker-compose up -d --build --remove-orphans
+
+docker-down:
+	docker-compose down -v --remove-orphans
+
+env-init:
+	rm -f .env && cp -n .env.example .env
+
 run:
 	docker exec -it FRAMEWORK_PHP $(filter-out $@,$(MAKECMDGOALS))
 
