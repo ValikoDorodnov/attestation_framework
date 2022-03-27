@@ -42,7 +42,7 @@ final class Route
         return true;
     }
 
-    public function setVars(string $uri): void
+    public function prepareVars(string $uri): void
     {
         $explodedUri = explode('/', $uri);
         $explodedPath = explode('/', $this->path);

@@ -7,14 +7,16 @@ namespace App\Controller\Api;
 use JsonException;
 use App\Core\Http\Request;
 use App\Core\Http\Response;
+use App\Core\Http\StatusCode;
 use App\Models\Article\ArticleValidator;
 use App\Models\Article\ArticleRepository;
 use App\Core\Interfaces\EntityManagerInterface;
+use App\Controller\Interfaces\Rest\RestController;
 use App\Models\Article\Exceptions\ArticleNotFoundException;
 use App\Models\Article\Exceptions\ParameterRequireException;
 use App\Models\Article\Exceptions\ArticleAlreadyExistException;
 
-final class ArticleController
+final class ArticleController implements RestController
 {
     public function __construct(
         private ArticleRepository      $repository,
@@ -57,7 +59,7 @@ final class ArticleController
         $this->validator->validateNewItem($body);
         $id = $this->repository->addNewArticle($this->em, $body);
 
-        return new Response(['id' => $id]);
+        return new Response(['id' => $id], StatusCode::CREATED);
     }
 
     /**
