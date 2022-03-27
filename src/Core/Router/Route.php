@@ -4,58 +4,59 @@ declare(strict_types=1);
 
 namespace App\Core\Router;
 
-use App\Core\Exceptions\MethodNotAllowedException;
-
 final class Route
 {
-    private string $method;
+    private const PARAMS_REGEXP = '/\<([^\]]*)\>/';
+
     private string $path;
     private string $handler;
+
     private array $vars = [];
 
-    public function __construct(string $method, string $path, string $handler)
+    public function __construct(string $path, string $handler)
     {
-        $this->method = $method;
         $this->path = $path;
         $this->handler = $handler;
     }
 
-    /**
-     * @param string $method
-     * @return void
-     * @throws MethodNotAllowedException
-     */
-    public function checkMethod(string $method): void
-    {
-        if ($this->method !== $method) {
-            throw new MethodNotAllowedException();
-        }
-    }
-
-    public function checkUri(string $uri): bool
+    public function validateRouteByPath(string $uri): bool
     {
         $explodedUri = explode('/', $uri);
         $explodedPath = explode('/', $this->path);
 
-        if ($explodedUri[1] !== $explodedPath[1]) {
-            return false;
-        }
-        unset($explodedUri[1], $explodedPath[1]);
+        foreach ($explodedUri as $key => $item) {
 
-        foreach ($explodedPath as $key => $item) {
-            $isVar = (bool)preg_match('/\<([^\]]*)\>/', $item);
+            if (!isset($explodedPath[$key])) {
+                return false;
+            }
 
-            if ($isVar && isset($explodedUri[$key])) {
-                $this->vars[] = $explodedUri[$key];
+            if ($this->isContainsVars($explodedPath[$key])) {
                 continue;
             }
 
-            if ($item !== $explodedUri[$key]) {
+            if ($explodedPath[$key] !== $item) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    public function setVars(string $uri): void
+    {
+        $explodedUri = explode('/', $uri);
+        $explodedPath = explode('/', $this->path);
+
+        foreach ($explodedUri as $key => $item) {
+            if ($this->isContainsVars($explodedPath[$key])) {
+                $this->vars[] = $item;
+            }
+        }
+    }
+
+    public function getPath(): string
+    {
+        return $this->path;
     }
 
     public function getVars(): array
@@ -66,5 +67,10 @@ final class Route
     public function getHandler(): string
     {
         return $this->handler;
+    }
+
+    private function isContainsVars(string $uri): bool
+    {
+        return (bool)preg_match(self::PARAMS_REGEXP, $uri);
     }
 }

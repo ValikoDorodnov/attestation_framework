@@ -12,14 +12,4 @@ final class SiteController
     {
         return new Response('hello from framework!');
     }
-
-    public function product($id): Response
-    {
-        $products = [
-            1 => 'product one',
-            2 => 'product two',
-        ];
-
-        return new Response($products[$id] ?? 'no product');
-    }
 }

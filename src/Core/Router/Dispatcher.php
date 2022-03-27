@@ -4,29 +4,42 @@ declare(strict_types=1);
 
 namespace App\Core\Router;
 
+use App\Core\DIContainer;
+use App\Core\Http\Request;
+use App\Core\Http\Response;
 use App\Core\Http\StatusCode;
 use App\Core\Exceptions\NotFoundException;
 use App\Core\Exceptions\MethodNotAllowedException;
 
 final class Dispatcher
 {
-    public function __construct(private RouteCollection $routeCollection)
+    public function __construct(
+        private RouteCollector $collector,
+        private DIContainer    $container,
+        private Request        $request
+    )
     {
     }
 
     public function dispatch(): void
     {
-        $httpMethod = $_SERVER['REQUEST_METHOD'];
-        $uri = $this->getUri();
-
-        $routeInfo = $this->parseRoute($httpMethod, $uri);
+        $routeInfo = $this->parseRoute(
+            method: $this->request->method(),
+            uri: $this->request->requestedUri()
+        );
         http_response_code($routeInfo['statusCode']);
 
         if ($routeInfo['statusCode'] === StatusCode::FOUND) {
+
             [$class, $method] = explode('/', $routeInfo['handler'], 2);
-            $controller = new $class();
-            $response = $controller->{$method}(...array_values($routeInfo['vars']));
-            $response();
+            $class = $this->container->getClassByName($class) ?? new $class();
+
+            $response = $class->{$method}(...array_values($routeInfo['vars']));
+
+            if ($response instanceof Response) {
+                $response();
+            }
+
         } else {
             echo $routeInfo['message'];
         }
@@ -37,7 +50,7 @@ final class Dispatcher
         $routeInfo = [];
 
         try {
-            $route = $this->routeCollection->getRouteByMethodAndUri(method: $method, uri: $uri);
+            $route = $this->collector->getRoute(method: $method, uri: $uri);
             $routeInfo['statusCode'] = StatusCode::FOUND;
             $routeInfo['handler'] = $route->getHandler();
             $routeInfo['vars'] = $route->getVars();
@@ -54,15 +67,5 @@ final class Dispatcher
         }
 
         return $routeInfo;
-    }
-
-    public function getUri(): string
-    {
-        $uri = $_SERVER['REQUEST_URI'];
-
-        if (false !== $pos = strpos($uri, '?')) {
-            $uri = substr($uri, 0, $pos);
-        }
-        return rawurldecode($uri);
     }
 }
